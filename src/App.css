@@ -217,7 +217,7 @@ h1, h2, h3, p {
 }
 
 .team {
-  position: absolute;
+  position:fixed;
   bottom: 0;
   left: 0;
   display: flex;
@@ -225,7 +225,7 @@ h1, h2, h3, p {
 }
 
 .wild-pokemon {
-  position: absolute;
+  position: fixed;
   top: 0;
   right: 0;
   display: flex;

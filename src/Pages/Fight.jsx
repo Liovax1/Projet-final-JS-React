@@ -6,7 +6,7 @@ import PokemonCard from "../components/PokemonCard";
 const Fight = () => {
     const [type, setType] = useState("");
     const [pokemons, setPokemons] = useState([]);
-    const [team, setTeam] = useState([]);
+    const [selectedPokemon, setSelectedPokemon] = useState(null);
     const [wildPokemon, setWildPokemon] = useState(null);
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -30,17 +30,13 @@ const Fight = () => {
             });
     };
 
-    const handleAddToTeam = (pokemon) => {
-        setTeam(prevTeam => {
-            if (!prevTeam.some(p => p.id === pokemon.id)) {
-                return [...prevTeam, pokemon];
-            }
-            return prevTeam;
-        });
+    const handleSelectPokemon = (pokemon, e) => {
+        e.stopPropagation(); // Empêche la propagation de l'événement de clic
+        setSelectedPokemon(pokemon);
     };
 
     useEffect(() => {
-        if (team.length > 0) {
+        if (selectedPokemon) {
             const timeout = Math.random() * (10000 - 3000) + 3000;
             const timer = setTimeout(() => {
                 fetch("https://pokebuildapi.fr/api/v1/random/team")
@@ -50,25 +46,37 @@ const Fight = () => {
                         setWildPokemon(wild);
                         alert(`Un ${wild.name} sauvage est apparu!`);
                         setTimeout(() => {
-                            determineWinner(team[team.length - 1], wild);
+                            determineWinner(selectedPokemon, wild);
                         }, 5000);
                     })
                     .catch(error => console.error("Erreur lors du chargement du Pokémon sauvage:", error));
             }, timeout);
             return () => clearTimeout(timer);
         }
-    }, [team]);
+    }, [selectedPokemon]);
 
-    const determineWinner = (teamPokemon, wildPokemon) => {
-        const teamPower = teamPokemon.stats.attack + teamPokemon.stats.defense + teamPokemon.stats.hp;
-        const wildPower = wildPokemon.stats.attack + wildPokemon.stats.defense + wildPokemon.stats.hp;
-        if (teamPower > wildPower) {
-            setResult("Votre Pokémon a gagné le combat!");
-        } else {
-            setResult("Votre Pokémon a perdu le combat.");
-        }
-        alert(result);
-    };
+   const determineWinner = (teamPokemon, wildPokemon) => {
+    const teamPower = teamPokemon.stats.attack + teamPokemon.stats.defense + teamPokemon.stats.hp;
+    const wildPower = wildPokemon.stats.attack + wildPokemon.stats.defense + wildPokemon.stats.hp;
+
+    // Facteur de chance
+    const teamLuck = Math.random() * 5; 
+    const wildLuck = Math.random() * 5; 
+
+    const finalTeamPower = teamPower + teamLuck;
+    const finalWildPower = wildPower + wildLuck;
+
+    let resultMessage;
+    if (finalTeamPower > finalWildPower) {
+        resultMessage = "Votre Pokémon a gagné le combat!";
+    } else {
+        resultMessage = "Votre Pokémon a perdu le combat.";
+    }
+    setResult(resultMessage);
+    alert(resultMessage);
+};
+
+    
 
     return (
         <div>
@@ -87,16 +95,14 @@ const Fight = () => {
             {error && <p>{error}</p>}
             <div>
                 {pokemons.map(pokemon => (
-                    <div key={pokemon.id} onClick={() => handleAddToTeam(pokemon)}>
-                        <PokemonCard pokemon={pokemon} />
+                    <div key={pokemon.id} onClick={(e) => handleSelectPokemon(pokemon, e)}>
+                        <PokemonCard pokemon={pokemon} disableLink={true} />
                     </div>
                 ))}
             </div>
             <div className="team">
-                <h2>Votre équipe</h2>
-                {team.map(pokemon => (
-                    <PokemonCard key={pokemon.id} pokemon={pokemon} />
-                ))}
+                <h2>Votre Pokémon</h2>
+                {selectedPokemon && <PokemonCard pokemon={selectedPokemon} />}
             </div>
             {wildPokemon && (
                 <div className="wild-pokemon">
